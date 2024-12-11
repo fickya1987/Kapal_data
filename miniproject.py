@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 import subprocess
 import os
@@ -78,7 +79,7 @@ if uploaded_file is not None:
         data = data.dropna(subset=['Date'])
 
 if data is None or data.empty:
-    st.warning("Silahkan Input Data format csv atau excel")
+    st.warning("Data tidak tersedia atau tidak valid.")
 else:
     st.title("Dashboard SPJM")
 
@@ -128,10 +129,16 @@ else:
         aggregated_data = data
         aggregation_title = "Raw Data"
 
-    # Visualization
+    # Visualization options
     if 'Value' in aggregated_data.columns and 'Date' in aggregated_data.columns:
         st.subheader(f"Trend Visualization SPJM ({aggregation_title})")
-        fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
+        chart_type = st.selectbox("Pilih Jenis Chart", ["Line Chart", "Scatter Plot"])
+
+        if chart_type == "Line Chart":
+            fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
+        elif chart_type == "Scatter Plot":
+            fig = px.scatter(aggregated_data, x='Date', y='Value', title=f"Scatter Data SPJM ({aggregation_title})")
+
         st.plotly_chart(fig)
 
         # AI Analysis in SPJM
@@ -140,6 +147,53 @@ else:
             ai_analysis = generate_ai_analysis(aggregated_data, context)
             st.subheader("Hasil Analisis AI SPJM:")
             st.write(ai_analysis)
+
+    # Prediction Section
+    st.subheader("Prediction SPJM")
+    forecast_period = st.number_input("Masukkan Periode Prediksi (bulan)", min_value=1, max_value=24, value=6)
+
+    if len(aggregated_data) >= 12:
+        try:
+            # Build SARIMAX model
+            model = SARIMAX(aggregated_data['Value'], order=(1, 1, 1), seasonal_order=(1, 1, 0, 12))
+            results = model.fit()
+
+            # Forecast
+            future = results.get_forecast(steps=forecast_period)
+            forecast = future.predicted_mean
+            conf_int = future.conf_int()
+
+            # Prepare forecast dataframe
+            forecast_dates = pd.date_range(start=aggregated_data['Date'].iloc[-1], periods=forecast_period+1, freq='M')[1:]
+            forecast_df = pd.DataFrame({
+                'Date': forecast_dates,
+                'Forecast': forecast.values,
+                'Lower Bound': conf_int.iloc[:, 0].values,
+                'Upper Bound': conf_int.iloc[:, 1].values
+            })
+
+            st.write("Forecast Data")
+            st.write(forecast_df)
+
+            # Visualization
+            fig_forecast = go.Figure()
+            fig_forecast.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['Forecast'], mode='lines+markers', name='Forecast'))
+            fig_forecast.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['Lower Bound'], mode='lines', name='Lower Bound', line=dict(dash='dot')))
+            fig_forecast.add_trace(go.Scatter(x=forecast_df['Date'], y=forecast_df['Upper Bound'], mode='lines', name='Upper Bound', line=dict(dash='dot')))
+            fig_forecast.update_layout(title="Prediction Results", xaxis_title="Date", yaxis_title="Value")
+            st.plotly_chart(fig_forecast)
+
+            # AI Analysis on Prediction
+            if st.button("Generate AI Analysis - Prediction"):
+                context = f"Prediksi SPJM berdasarkan {aggregation_title}"
+                ai_prediction_analysis = generate_ai_analysis(forecast_df, context)
+                st.subheader("Hasil Analisis AI Prediction:")
+                st.write(ai_prediction_analysis)
+
+        except Exception as e:
+            st.error(f"Error in prediction: {e}")
+    else:
+        st.warning("Data insufficient for prediction. Minimum 12 data points required.")
 
 
 
