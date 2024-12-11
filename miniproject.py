@@ -4,6 +4,7 @@ import plotly.express as px
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 import os
 import warnings
+import openai
 
 # Set configurations
 warnings.filterwarnings('ignore')
@@ -31,6 +32,24 @@ def filter_and_prepare_data(data):
     data['Date'] = pd.to_datetime(data['Date'], errors='coerce')
     data = data.dropna(subset=['Date'])
     return data
+
+# AI Analysis Function
+def generate_ai_analysis(data, context):
+    try:
+        data_summary = data.to_string(index=False, max_rows=5)
+        messages = [
+            {"role": "system", "content": "Anda adalah seorang analis data yang mahir."},
+            {"role": "user", "content": f"Berikan analisis naratif berdasarkan data berikut:\n\n{data_summary}\n\nKonsep: {context}. Tuliskan analisis dengan narasi yang jelas dan terstruktur."}
+        ]
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=2048,
+            temperature=1.0
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        return f"Terjadi kesalahan saat memproses analisis AI: {e}"
 
 # Main Application Logic
 st.title("SPJM Analysis Dashboard")
@@ -89,6 +108,12 @@ else:
 
         st.plotly_chart(fig)
 
+        # AI Analysis Button
+        if st.button("Generate AI Analysis - Visualization"):
+            ai_analysis = generate_ai_analysis(aggregated_data, "Trend Visualization SPJM")
+            st.subheader("Hasil Analisis AI:")
+            st.write(ai_analysis)
+
     # Prediction
     st.subheader("Prediction SPJM")
     forecast_period = st.number_input("Masukkan Periode Prediksi (bulan)", min_value=1, max_value=24, value=6)
@@ -117,6 +142,12 @@ else:
             fig_forecast.add_scatter(x=forecast_df['Date'], y=forecast_df['Lower Bound'], mode='lines', name='Lower Bound', line=dict(dash='dot'))
             fig_forecast.add_scatter(x=forecast_df['Date'], y=forecast_df['Upper Bound'], mode='lines', name='Upper Bound', line=dict(dash='dot'))
             st.plotly_chart(fig_forecast)
+
+            # AI Analysis Button for Prediction
+            if st.button("Generate AI Analysis - Prediction"):
+                ai_prediction_analysis = generate_ai_analysis(forecast_df, "Prediction Analysis SPJM")
+                st.subheader("Hasil Analisis AI Prediksi:")
+                st.write(ai_prediction_analysis)
 
         except Exception as e:
             st.error(f"Error in prediction: {e}")
