@@ -81,7 +81,7 @@ if uploaded_file is not None:
         data = data.dropna(subset=['Date'])
 
 if data is None or data.empty:
-    st.warning("Data tidak tersedia atau tidak valid.")
+    st.warning("Silahkan Input Data!")
 else:
     if menu == "Pilih Kategori":
         st.title("Pilih Kategori Data")
