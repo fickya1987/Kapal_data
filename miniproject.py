@@ -79,7 +79,7 @@ if uploaded_file is not None:
         data = data.dropna(subset=['Date'])
 
 if data is None or data.empty:
-    st.warning("Data tidak tersedia atau tidak valid.")
+    st.warning("Mohon Input Data!")
 else:
     st.title("Dashboard SPJM")
 
@@ -132,12 +132,14 @@ else:
     # Visualization options
     if 'Value' in aggregated_data.columns and 'Date' in aggregated_data.columns:
         st.subheader(f"Trend Visualization SPJM ({aggregation_title})")
-        chart_type = st.selectbox("Pilih Jenis Chart", ["Line Chart", "Scatter Plot"])
+        chart_type = st.selectbox("Pilih Jenis Chart", ["Line Chart", "Scatter Plot", "Histogram"])
 
         if chart_type == "Line Chart":
             fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
         elif chart_type == "Scatter Plot":
             fig = px.scatter(aggregated_data, x='Date', y='Value', title=f"Scatter Data SPJM ({aggregation_title})")
+        elif chart_type == "Histogram":
+            fig = px.histogram(aggregated_data, x='Value', title=f"Histogram Data SPJM ({aggregation_title})")
 
         st.plotly_chart(fig)
 
@@ -160,8 +162,8 @@ else:
 
             # Forecast
             future = results.get_forecast(steps=forecast_period)
-            forecast = future.predicted_mean
-            conf_int = future.conf_int()
+            forecast = future.predicted_mean.clip(lower=0)  # Ensure no negative values
+            conf_int = future.conf_int().clip(lower=0)  # Ensure no negative bounds
 
             # Prepare forecast dataframe
             forecast_dates = pd.date_range(start=aggregated_data['Date'].iloc[-1], periods=forecast_period+1, freq='M')[1:]
@@ -194,6 +196,7 @@ else:
             st.error(f"Error in prediction: {e}")
     else:
         st.warning("Data insufficient for prediction. Minimum 12 data points required.")
+
 
 
 
