@@ -89,11 +89,34 @@ else:
         category = st.radio("Pilih Kategori", ["Petikemas", "Non-Petikemas", "SPJM"])
 
         if category == "SPJM":
-            context = "Analisis SPJM"
-            if st.button("Generate AI Analysis - SPJM"):
-                ai_analysis = generate_ai_analysis(data, context)
-                st.subheader("Hasil Analisis AI SPJM:")
-                st.write(ai_analysis)
+            st.title("Dashboard SPJM")
+
+            if 'JenisServis' in data.columns:
+                jenis_servis_list = data['JenisServis'].unique()
+                selected_jenis_servis = st.sidebar.selectbox("Pilih Jenis Servis", jenis_servis_list)
+                data = data[data['JenisServis'] == selected_jenis_servis]
+
+            if 'Terminal' in data.columns:
+                terminal_list = data['Terminal'].unique()
+                selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
+                data = data[data['Terminal'] == selected_terminal]
+
+            # Display filtered data
+            st.write("Filtered Data")
+            st.write(data.head())
+
+            # Visualization
+            if 'Value' in data.columns and 'Date' in data.columns:
+                st.subheader("Trend Visualization SPJM")
+                fig = px.line(data, x='Date', y='Value', title="Trend Data SPJM", markers=True)
+                st.plotly_chart(fig)
+
+                # AI Analysis in SPJM
+                if st.button("Generate AI Analysis - SPJM"):
+                    context = "Analisis SPJM"
+                    ai_analysis = generate_ai_analysis(data, context)
+                    st.subheader("Hasil Analisis AI SPJM:")
+                    st.write(ai_analysis)
 
     elif menu == "Dashboard":
         st.title("Dashboard Kapal Analysis")
