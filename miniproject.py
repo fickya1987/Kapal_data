@@ -79,9 +79,6 @@ if uploaded_file is not None:
     if data is not None and 'Date' in data.columns:
         data['Date'] = pd.to_datetime(data['Date'], errors='coerce')
         data = data.dropna(subset=['Date'])
-
-if data is None or data.empty:
-    st.warning("Silahkan input data dalam format csv atau excel")
 else:
     if menu == "Pilih Kategori":
         st.title("Pilih Kategori Data")
@@ -154,7 +151,7 @@ else:
         if 'JenisKegiatan' in data.columns:
             jenis_kegiatan_list = data['JenisKegiatan'].unique()
             selected_jenis_kegiatan = st.sidebar.selectbox("Pilih Jenis Kegiatan", jenis_kegiatan_list)
-            data = data[data['JenisKegiatan'] == selected_kegiatan]
+            data = data[data['JenisKegiatan'] == selected_jenis_kegiatan]
 
         if 'JenisVessel' in data.columns:
             jenis_vessel_list = data['JenisVessel'].unique()
@@ -244,3 +241,4 @@ else:
                 st.error("Data insufficient for prediction. Minimum 12 data points required.")
         else:
             st.error("Required columns ('Date', 'Value') not found in the dataset.")
+
