@@ -87,6 +87,21 @@ else:
         selected_jenis_servis = st.sidebar.selectbox("Pilih Jenis Servis", jenis_servis_list)
         data = data[data['JenisServis'] == selected_jenis_servis]
 
+    if 'JenisKegiatan' in data.columns:
+        jenis_kegiatan_list = data['JenisKegiatan'].unique()
+        selected_jenis_kegiatan = st.sidebar.selectbox("Pilih Jenis Kegiatan", jenis_kegiatan_list)
+        data = data[data['JenisKegiatan'] == selected_jenis_kegiatan]
+
+    if 'JenisVessel' in data.columns:
+        jenis_vessel_list = data['JenisVessel'].unique()
+        selected_jenis_vessel = st.sidebar.selectbox("Pilih Jenis Vessel", jenis_vessel_list)
+        data = data[data['JenisVessel'] == selected_jenis_vessel]
+
+    if 'JenisKapal' in data.columns:
+        jenis_kapal_list = data['JenisKapal'].unique()
+        selected_jenis_kapal = st.sidebar.selectbox("Pilih Jenis Kapal", jenis_kapal_list)
+        data = data[data['JenisKapal'] == selected_jenis_kapal]
+
     if 'Terminal' in data.columns:
         terminal_list = data['Terminal'].unique()
         selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
@@ -125,5 +140,6 @@ else:
             ai_analysis = generate_ai_analysis(aggregated_data, context)
             st.subheader("Hasil Analisis AI SPJM:")
             st.write(ai_analysis)
+
 
 
