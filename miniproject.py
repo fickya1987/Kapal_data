@@ -31,7 +31,7 @@ if not openai.api_key:
 
 warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="Kapal Analysis", layout="wide")
+st.set_page_config(page_title="SPJM Analysis", layout="wide")
 
 # Sidebar menu
 menu = st.sidebar.selectbox("Pilih Menu", ["Pilih Kategori", "Dashboard", "Prediction"])
@@ -81,12 +81,12 @@ if uploaded_file is not None:
         data = data.dropna(subset=['Date'])
 
 if data is None or data.empty:
-    st.warning("Silahkan Input Data!")
+    st.warning("Silahkan Input Data dalam csv atau excel")
 else:
     if menu == "Pilih Kategori":
         st.title("Pilih Kategori Data")
 
-        category = st.radio("Pilih Kategori", ["Petikemas", "Non-Petikemas", "SPJM"])
+        category = st.radio("Pilih Kategori", ["SPJM"])
 
         if category == "SPJM":
             st.title("Dashboard SPJM")
@@ -202,8 +202,8 @@ else:
                     forecast_df = pd.DataFrame({
                         'Date': forecast_dates,
                         'Forecast': forecast.values,
-                        'Lower Bound': conf_int.iloc[:, 0],
-                        'Upper Bound': conf_int.iloc[:, 1]
+                        'Lower Bound': conf_int.iloc[:, 0].values,
+                        'Upper Bound': conf_int.iloc[:, 1].values
                     })
 
                     st.write("Forecast Data")
@@ -211,8 +211,8 @@ else:
 
                     # Visualization
                     fig = px.line(forecast_df, x='Date', y='Forecast', title="Forecast Results")
-                    fig.add_scatter(x=forecast_df['Date'], y='Lower Bound', mode='lines', name='Lower Bound', line=dict(dash='dot'))
-                    fig.add_scatter(x=forecast_df['Date'], y='Upper Bound', mode='lines', name='Upper Bound', line=dict(dash='dot'))
+                    fig.add_scatter(x=forecast_df['Date'], y=forecast_df['Lower Bound'].values, mode='lines', name='Lower Bound', line=dict(dash='dot'))
+                    fig.add_scatter(x=forecast_df['Date'], y=forecast_df['Upper Bound'].values, mode='lines', name='Upper Bound', line=dict(dash='dot'))
                     st.plotly_chart(fig)
 
                     # AI Analysis in Prediction
@@ -227,3 +227,4 @@ else:
                 st.error("Data insufficient for prediction. Minimum 12 data points required.")
         else:
             st.error("Required columns ('Date', 'Value') not found in the dataset.")
+
