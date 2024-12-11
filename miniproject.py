@@ -31,10 +31,7 @@ if not openai.api_key:
 
 warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="Kapal Analysis", layout="wide")
-
-# Sidebar menu
-menu = st.sidebar.selectbox("Pilih Menu", ["Pilih Kategori", "Dashboard", "Prediction"])
+st.set_page_config(page_title="SPJM Analysis", layout="wide")
 
 # Function to load and preprocess data
 def load_data(file):
@@ -79,166 +76,54 @@ if uploaded_file is not None:
     if data is not None and 'Date' in data.columns:
         data['Date'] = pd.to_datetime(data['Date'], errors='coerce')
         data = data.dropna(subset=['Date'])
+
+if data is None or data.empty:
+    st.warning("Data tidak tersedia atau tidak valid.")
 else:
-    if menu == "Pilih Kategori":
-        st.title("Pilih Kategori Data")
+    st.title("Dashboard SPJM")
 
-        category = st.radio("Pilih Kategori", ["SPJM"])
+    if 'JenisServis' in data.columns:
+        jenis_servis_list = data['JenisServis'].unique()
+        selected_jenis_servis = st.sidebar.selectbox("Pilih Jenis Servis", jenis_servis_list)
+        data = data[data['JenisServis'] == selected_jenis_servis]
 
-        if category == "SPJM":
-            st.title("Dashboard SPJM")
+    if 'Terminal' in data.columns:
+        terminal_list = data['Terminal'].unique()
+        selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
+        data = data[data['Terminal'] == selected_terminal]
 
-            if 'JenisServis' in data.columns:
-                jenis_servis_list = data['JenisServis'].unique()
-                selected_jenis_servis = st.sidebar.selectbox("Pilih Jenis Servis", jenis_servis_list)
-                data = data[data['JenisServis'] == selected_jenis_servis]
+    if 'Satuan' in data.columns:
+        satuan_list = data['Satuan'].unique()
+        selected_satuan = st.sidebar.selectbox("Pilih Satuan", satuan_list)
+        data = data[data['Satuan'] == selected_satuan]
 
-            if 'Terminal' in data.columns:
-                terminal_list = data['Terminal'].unique()
-                selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
-                data = data[data['Terminal'] == selected_terminal]
+    # Display filtered data
+    st.write("Filtered Data")
+    st.write(data.head())
 
-            if 'Satuan' in data.columns:
-                satuan_list = data['Satuan'].unique()
-                selected_satuan = st.sidebar.selectbox("Pilih Satuan", satuan_list)
-                data = data[data['Satuan'] == selected_satuan]
+    # Aggregation based on Satuan
+    if selected_satuan == "Call":
+        aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
+        aggregation_title = "Total Calls"
+    elif selected_satuan == "GT":
+        aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
+        aggregation_title = "Total Gross Tonnage (GT)"
+    else:
+        st.warning("Satuan tidak dikenal. Data akan ditampilkan tanpa agregasi.")
+        aggregated_data = data
+        aggregation_title = "Raw Data"
 
-            # Display filtered data
-            st.write("Filtered Data")
-            st.write(data.head())
+    # Visualization
+    if 'Value' in aggregated_data.columns and 'Date' in aggregated_data.columns:
+        st.subheader(f"Trend Visualization SPJM ({aggregation_title})")
+        fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
+        st.plotly_chart(fig)
 
-            # Aggregation based on Satuan
-            if selected_satuan == "Call":
-                aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
-                aggregation_title = "Total Calls"
-            elif selected_satuan == "GT":
-                aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
-                aggregation_title = "Total Gross Tonnage (GT)"
-            else:
-                st.warning("Satuan tidak dikenal. Data akan ditampilkan tanpa agregasi.")
-                aggregated_data = data
-                aggregation_title = "Raw Data"
+        # AI Analysis in SPJM
+        if st.button("Generate AI Analysis - SPJM"):
+            context = f"Analisis SPJM berdasarkan {aggregation_title}"
+            ai_analysis = generate_ai_analysis(aggregated_data, context)
+            st.subheader("Hasil Analisis AI SPJM:")
+            st.write(ai_analysis)
 
-            # Visualization
-            if 'Value' in aggregated_data.columns and 'Date' in aggregated_data.columns:
-                st.subheader(f"Trend Visualization SPJM ({aggregation_title})")
-                fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
-                st.plotly_chart(fig)
-
-                # AI Analysis in SPJM
-                if st.button("Generate AI Analysis - SPJM"):
-                    context = f"Analisis SPJM berdasarkan {aggregation_title}"
-                    ai_analysis = generate_ai_analysis(aggregated_data, context)
-                    st.subheader("Hasil Analisis AI SPJM:")
-                    st.write(ai_analysis)
-
-    elif menu == "Dashboard":
-        st.title("Dashboard Kapal Analysis")
-
-        # Filter options
-        st.sidebar.subheader("Filter Data")
-
-        if 'Satuan' in data.columns:
-            satuan_list = data['Satuan'].unique()
-            selected_satuan = st.sidebar.selectbox("Pilih Satuan", satuan_list)
-            data = data[data['Satuan'] == selected_satuan]
-
-        if 'JenisServis' in data.columns:
-            jenis_servis_list = data['JenisServis'].unique()
-            selected_jenis_servis = st.sidebar.selectbox("Pilih Jenis Servis", jenis_servis_list)
-            data = data[data['JenisServis'] == selected_jenis_servis]
-
-        if 'JenisKegiatan' in data.columns:
-            jenis_kegiatan_list = data['JenisKegiatan'].unique()
-            selected_jenis_kegiatan = st.sidebar.selectbox("Pilih Jenis Kegiatan", jenis_kegiatan_list)
-            data = data[data['JenisKegiatan'] == selected_jenis_kegiatan]
-
-        if 'JenisVessel' in data.columns:
-            jenis_vessel_list = data['JenisVessel'].unique()
-            selected_jenis_vessel = st.sidebar.selectbox("Pilih Jenis Vessel", jenis_vessel_list)
-            data = data[data['JenisVessel'] == selected_jenis_vessel]
-
-        if 'JenisKapal' in data.columns:
-            jenis_kapal_list = data['JenisKapal'].unique()
-            selected_jenis_kapal = st.sidebar.selectbox("Pilih Jenis Kapal", jenis_kapal_list)
-            data = data[data['JenisKapal'] == selected_jenis_kapal]
-
-        if 'Terminal' in data.columns:
-            terminal_list = data['Terminal'].unique()
-            selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
-            data = data[data['Terminal'] == selected_terminal]
-
-        # Display filtered data
-        st.write("Filtered Data")
-        st.write(data.head())
-
-        # Visualization
-        if 'Value' in data.columns and 'Date' in data.columns:
-            st.subheader("Trend Visualization")
-            fig = px.line(data, x='Date', y='Value', title="Trend Data", markers=True)
-            st.plotly_chart(fig)
-
-            # AI Analysis in Dashboard
-            if st.button("Generate AI Analysis - Dashboard"):
-                context = "Analisis Dashboard"
-                ai_analysis = generate_ai_analysis(data, context)
-                st.subheader("Hasil Analisis AI Dashboard:")
-                st.write(ai_analysis)
-
-    elif menu == "Prediction":
-        st.title("Prediction Kapal Analysis")
-
-        # Ensure required columns are present
-        required_columns = ['Date', 'Value']
-        if all(col in data.columns for col in required_columns):
-            st.write("Data for Prediction")
-            st.write(data.head())
-
-            forecast_period = st.number_input("Masukkan Periode Prediksi (bulan)", min_value=1, max_value=24, value=6)
-
-            # Aggregate data for modeling
-            data_grouped = data.groupby('Date')['Value'].sum().reset_index()
-            data_grouped = data_grouped.sort_values('Date')
-
-            if len(data_grouped) >= 12:
-                try:
-                    # Build SARIMAX model
-                    model = SARIMAX(data_grouped['Value'], order=(1, 1, 1), seasonal_order=(1, 1, 0, 12))
-                    results = model.fit()
-
-                    # Forecast
-                    future = results.get_forecast(steps=forecast_period)
-                    forecast = future.predicted_mean
-                    conf_int = future.conf_int()
-
-                    # Prepare forecast dataframe
-                    forecast_dates = pd.date_range(start=data_grouped['Date'].iloc[-1], periods=forecast_period+1, freq='M')[1:]
-                    forecast_df = pd.DataFrame({
-                        'Date': forecast_dates,
-                        'Forecast': forecast.values,
-                        'Lower Bound': conf_int.iloc[:, 0].values,
-                        'Upper Bound': conf_int.iloc[:, 1].values
-                    })
-
-                    st.write("Forecast Data")
-                    st.write(forecast_df)
-
-                    # Visualization
-                    fig = px.line(forecast_df, x='Date', y='Forecast', title="Forecast Results")
-                    fig.add_scatter(x=forecast_df['Date'], y=forecast_df['Lower Bound'].values, mode='lines', name='Lower Bound', line=dict(dash='dot'))
-                    fig.add_scatter(x=forecast_df['Date'], y=forecast_df['Upper Bound'].values, mode='lines', name='Upper Bound', line=dict(dash='dot'))
-                    st.plotly_chart(fig)
-
-                    # AI Analysis in Prediction
-                    if st.button("Generate AI Analysis - Prediction"):
-                        context = "Analisis Prediksi"
-                        ai_analysis = generate_ai_analysis(forecast_df, context)
-                        st.subheader("Hasil Analisis AI Prediction:")
-                        st.write(ai_analysis)
-                except Exception as e:
-                    st.error(f"Error in prediction: {e}")
-            else:
-                st.error("Data insufficient for prediction. Minimum 12 data points required.")
-        else:
-            st.error("Required columns ('Date', 'Value') not found in the dataset.")
 
