@@ -97,14 +97,26 @@ else:
         aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
 
         st.subheader("Trend Visualization")
-        chart_type = st.selectbox("Pilih Jenis Chart", ["Line Chart", "Scatter Plot", "Histogram"])
+        chart_type = st.selectbox("Pilih Jenis Chart", [
+            "Line Chart", "Bar Chart", "Pie Chart", "Area Chart", 
+            "Bubble Chart", "Scatter Plot Chart", "Funnel Chart", "Waterfall Chart"])
 
         if chart_type == "Line Chart":
             fig = px.line(aggregated_data, x='Date', y='Value', title="Trend Data SPJM", markers=True)
-        elif chart_type == "Scatter Plot":
-            fig = px.scatter(aggregated_data, x='Date', y='Value', title="Scatter Data SPJM")
-        elif chart_type == "Histogram":
-            fig = px.histogram(data, x='Value', title="Histogram Data SPJM")
+        elif chart_type == "Bar Chart":
+            fig = px.bar(aggregated_data, x='Date', y='Value', title="Bar Chart Data SPJM")
+        elif chart_type == "Pie Chart":
+            fig = px.pie(aggregated_data, values='Value', names='Date', title="Pie Chart Data SPJM")
+        elif chart_type == "Area Chart":
+            fig = px.area(aggregated_data, x='Date', y='Value', title="Area Chart Data SPJM")
+        elif chart_type == "Bubble Chart":
+            fig = px.scatter(aggregated_data, x='Date', y='Value', size='Value', title="Bubble Chart Data SPJM")
+        elif chart_type == "Scatter Plot Chart":
+            fig = px.scatter(aggregated_data, x='Date', y='Value', title="Scatter Plot Chart Data SPJM")
+        elif chart_type == "Funnel Chart":
+            fig = px.funnel(aggregated_data, x='Date', y='Value', title="Funnel Chart Data SPJM")
+        elif chart_type == "Waterfall Chart":
+            fig = px.waterfall(aggregated_data, x='Date', y='Value', title="Waterfall Chart Data SPJM")
 
         st.plotly_chart(fig)
 
@@ -153,6 +165,7 @@ else:
             st.error(f"Error in prediction: {e}")
     else:
         st.warning("Data insufficient for prediction. Minimum 12 data points required.")
+
 
 
 
