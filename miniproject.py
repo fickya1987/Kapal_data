@@ -31,7 +31,7 @@ if not openai.api_key:
 
 warnings.filterwarnings('ignore')
 
-st.set_page_config(page_title="SPJM Analysis", layout="wide")
+st.set_page_config(page_title="Kapal Analysis", layout="wide")
 
 # Sidebar menu
 menu = st.sidebar.selectbox("Pilih Menu", ["Pilih Kategori", "Dashboard", "Prediction"])
@@ -81,7 +81,7 @@ if uploaded_file is not None:
         data = data.dropna(subset=['Date'])
 
 if data is None or data.empty:
-    st.warning("Silahkan Input Data dalam csv atau excel")
+    st.warning("Silahkan input data dalam format csv atau excel")
 else:
     if menu == "Pilih Kategori":
         st.title("Pilih Kategori Data")
@@ -101,20 +101,37 @@ else:
                 selected_terminal = st.sidebar.selectbox("Pilih Terminal", terminal_list)
                 data = data[data['Terminal'] == selected_terminal]
 
+            if 'Satuan' in data.columns:
+                satuan_list = data['Satuan'].unique()
+                selected_satuan = st.sidebar.selectbox("Pilih Satuan", satuan_list)
+                data = data[data['Satuan'] == selected_satuan]
+
             # Display filtered data
             st.write("Filtered Data")
             st.write(data.head())
 
+            # Aggregation based on Satuan
+            if selected_satuan == "Call":
+                aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
+                aggregation_title = "Total Calls"
+            elif selected_satuan == "GT":
+                aggregated_data = data.groupby('Date')['Value'].sum().reset_index()
+                aggregation_title = "Total Gross Tonnage (GT)"
+            else:
+                st.warning("Satuan tidak dikenal. Data akan ditampilkan tanpa agregasi.")
+                aggregated_data = data
+                aggregation_title = "Raw Data"
+
             # Visualization
-            if 'Value' in data.columns and 'Date' in data.columns:
-                st.subheader("Trend Visualization SPJM")
-                fig = px.line(data, x='Date', y='Value', title="Trend Data SPJM", markers=True)
+            if 'Value' in aggregated_data.columns and 'Date' in aggregated_data.columns:
+                st.subheader(f"Trend Visualization SPJM ({aggregation_title})")
+                fig = px.line(aggregated_data, x='Date', y='Value', title=f"Trend Data SPJM ({aggregation_title})", markers=True)
                 st.plotly_chart(fig)
 
                 # AI Analysis in SPJM
                 if st.button("Generate AI Analysis - SPJM"):
-                    context = "Analisis SPJM"
-                    ai_analysis = generate_ai_analysis(data, context)
+                    context = f"Analisis SPJM berdasarkan {aggregation_title}"
+                    ai_analysis = generate_ai_analysis(aggregated_data, context)
                     st.subheader("Hasil Analisis AI SPJM:")
                     st.write(ai_analysis)
 
@@ -137,7 +154,7 @@ else:
         if 'JenisKegiatan' in data.columns:
             jenis_kegiatan_list = data['JenisKegiatan'].unique()
             selected_jenis_kegiatan = st.sidebar.selectbox("Pilih Jenis Kegiatan", jenis_kegiatan_list)
-            data = data[data['JenisKegiatan'] == selected_jenis_kegiatan]
+            data = data[data['JenisKegiatan'] == selected_kegiatan]
 
         if 'JenisVessel' in data.columns:
             jenis_vessel_list = data['JenisVessel'].unique()
@@ -227,4 +244,3 @@ else:
                 st.error("Data insufficient for prediction. Minimum 12 data points required.")
         else:
             st.error("Required columns ('Date', 'Value') not found in the dataset.")
-
