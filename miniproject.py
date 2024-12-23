@@ -8,7 +8,7 @@ import openai
 
 # Set configurations
 warnings.filterwarnings('ignore')
-st.set_page_config(page_title="SPJM Analysis", layout="wide")
+st.set_page_config(page_title="Pelindo SPJM Analysis", layout="wide")
 
 # Function to load and preprocess data
 def load_data(file):
@@ -42,7 +42,7 @@ def generate_ai_analysis(data, context):
             {"role": "user", "content": f"Berikan analisis naratif berdasarkan data berikut:\n\n{data_summary}\n\nKonsep: {context}. Tuliskan analisis dengan narasi yang jelas dan terstruktur."}
         ]
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=messages,
             max_tokens=2048,
             temperature=1.0
@@ -52,7 +52,7 @@ def generate_ai_analysis(data, context):
         return f"Terjadi kesalahan saat memproses analisis AI: {e}"
 
 # Main Application Logic
-st.title("SPJM Analysis Dashboard")
+st.title("Pelindo SPJM Analysis Dashboard")
 uploaded_file = st.file_uploader("Unggah File Data (.csv atau .xlsx)", type=["csv", "xlsx"])
 
 data = None
@@ -121,7 +121,7 @@ else:
         st.plotly_chart(fig)
 
         # AI Analysis Button
-        if st.button("Generate AI Analysis - Visualization"):
+        if st.button("Generate Pelindo AI - Visualization"):
             ai_analysis = generate_ai_analysis(aggregated_data, "Trend Visualization SPJM")
             st.subheader("Hasil Analisis AI:")
             st.write(ai_analysis)
@@ -156,7 +156,7 @@ else:
             st.plotly_chart(fig_forecast)
 
             # AI Analysis Button for Prediction
-            if st.button("Generate AI Analysis - Prediction"):
+            if st.button("Generate Pelindo AI - Prediction"):
                 ai_prediction_analysis = generate_ai_analysis(forecast_df, "Prediction Analysis SPJM")
                 st.subheader("Hasil Analisis AI Prediksi:")
                 st.write(ai_prediction_analysis)
